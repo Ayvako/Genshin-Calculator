@@ -1,18 +1,23 @@
-﻿namespace Genshin.src.LevelingResources
+﻿using Newtonsoft.Json;
+
+namespace Genshin.src.LevelingResources
 {
     public class Material
     {
         public string Name { get; set; }
         public int Amount { get; set; }
-        public Material(string name, int amount = 0)
+        public string Type { get; set; }
+
+        public Material(string name, string type, int amount = 0)
         {
             Name = name;
+            Type = type;
             Amount = amount;
+
         }
         public override bool Equals(object? obj)
         {
-            var item = obj as Material;
-            if (item == null)
+            if (obj is not Material item)
             {
                 return false;
             }
@@ -30,4 +35,15 @@
         }
 
     }
+
+    static class MaterailTypes
+    {
+        public const string GEM   = "Gem";
+        public const string ENEMY = "Enemy";
+        public const string BOOK  = "Book";
+        public const string EXP   = "Exp";
+        public const string OTHER = "Other";
+    }
+
+
 }

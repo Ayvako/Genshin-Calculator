@@ -2,7 +2,7 @@
 {
     public static class Book
     {
-        private static readonly Dictionary<string, string[]> Materials_by_book = new()
+        private static readonly Dictionary<string, string[]> Books = new()
         {
                 {"Freedom",    new[]{ "TeachingsOfFreedom"    ,"GuideToFreedom"    ,"PhilosophiesOfFreedom"   }},
                 {"Resistance", new[]{ "TeachingsOfResistance" ,"GuideToResistance" ,"PhilosophiesOfResistance"}},
@@ -21,9 +21,9 @@
 
         public static string GetMaterial(Character character, string rarity) => rarity switch
         {
-            "green" => Materials_by_book[character.Book_type][0],
-            "blue" => Materials_by_book[character.Book_type][1],
-            "violet" => Materials_by_book[character.Book_type][2],
+            "green"  => Books[character.Assets.BookType][0],
+            "blue"   => Books[character.Assets.BookType][1],
+            "violet" => Books[character.Assets.BookType][2],
             _ => throw new Exception("Unknown Property Name"),
         };
     }

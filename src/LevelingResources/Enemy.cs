@@ -2,7 +2,7 @@
 {
     public static class Enemy
     {
-        private static readonly Dictionary<string, string[]> Materials_by_enemy = new()
+        private static readonly Dictionary<string, string[]> Enemies = new()
         {
                 {"OldHandguard"             ,new[]  { "OldHandguard"            ,"KageuchiHandguard"   ,"FamedHandguard"      }},
                 {"DamagedMask"              ,new[]  { "DamagedMask"             ,"StainedMask"         ,"OminousMask"         }},
@@ -21,9 +21,9 @@
 
         public static string GetMaterial(Character character, string rarity) => rarity switch
         {
-            "white" => Materials_by_enemy[character.Enemy][0],
-            "green" => Materials_by_enemy[character.Enemy][1],
-            "blue" => Materials_by_enemy[character.Enemy][2],
+            "white" => Enemies[character.Assets.Enemy][0],
+            "green" => Enemies[character.Assets.Enemy][1],
+            "blue"  => Enemies[character.Assets.Enemy][2],
             _ => throw new Exception("Unknown Property Name"),
         };
     }
