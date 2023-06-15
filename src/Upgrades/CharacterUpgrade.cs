@@ -1,6 +1,6 @@
 ﻿using Genshin.src.LevelingResources;
 
-namespace Genshin.src.Upgredes
+namespace Genshin.src.Upgrades
 {
     public class CharacterUpgrade
     {

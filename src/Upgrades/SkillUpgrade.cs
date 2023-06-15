@@ -1,7 +1,7 @@
 ﻿using Genshin.src.LevelingResources;
 using System.Linq;
 
-namespace Genshin.src.Upgredes
+namespace Genshin.src.Upgrades
 {
     public class SkillUpgrade
     {

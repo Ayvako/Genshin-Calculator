@@ -1,64 +1,73 @@
 ﻿using Genshin.src.LevelingResources;
-using Genshin.src.Upgredes;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System;
-using System.Linq;
+using Genshin.src.Upgrades;
 
 namespace Genshin.src
 {
     public static class Inventory
     {
-        static Dictionary<string, int> MyInventory = new();
-        static Dictionary<string, int> InventoryCopy = new();
-        static readonly List<Character> Characters = new();
+        public static Dictionary<string, int> MyInventory = new();
+
+        public static List<Character> Characters = new();
+        public static Dictionary<string, int> InventoryCopy = new();
+
         static Dictionary<Character, List<Material>> RequiredMaterials = new();
+
 
         public static Dictionary<Character, List<Material>> CalcRequiredMaterials()
         {
             List<Character> activeCharacters = GetActiveCharacters();
             Dictionary<Character, List<Material>> materialsForCharacters = new();
-            List<Material> temp = new();
+            List<Material> remainingMaterials = new();
+
+
             int exp = (InventoryCopy["HerosWit"] * 20 + InventoryCopy["AdventurersExperience"] * 5 + InventoryCopy["WanderersAdvice"] * 1);
             foreach (var character in activeCharacters)
             {
-                exp = CalcExp(character, temp, exp);
-                CalcGem(character, temp);
-                foreach (var m in TotalCost(character))
+
+                foreach (var m in TotalCost(character).OrderBy(m => m.Type).ToList())
                 {
 
-                    if (m.Name == "HerosWit") continue;
-                    if (m.Name == "AdventurersExperience") continue;
-                    if (m.Name == "WanderersAdvice") continue;
-                    if (m.Name == Gem.GetMaterial(character, "green")) continue;
-                    if (m.Name == Gem.GetMaterial(character, "blue")) continue;
-                    if (m.Name == Gem.GetMaterial(character, "violet")) continue;
-                    if (m.Name == Gem.GetMaterial(character, "orange")) continue;
-                    if (InventoryCopy[m.Name] < m.Amount)
+                    if (m.Type == MaterailTypes.EXP)
                     {
-                        temp.Add(new Material(m.Name, m.Type, m.Amount - InventoryCopy[m.Name]));
-                        InventoryCopy[m.Name] = 0;
+                        exp = CalcExp(m, remainingMaterials, exp);
                     }
-                    else if (InventoryCopy[m.Name] >= m.Amount)
+                    else if(m.Type == MaterailTypes.GEM)
                     {
-                        temp.Add(new Material(m.Name, m.Type, 0));
-                        InventoryCopy[m.Name] -= m.Amount;
+                        CalcGem(m, character, remainingMaterials);
                     }
+                    else if (m.Type == MaterailTypes.BOOK)
+                    {
+
+                    }
+                    else if (m.Type == MaterailTypes.ENEMY)
+                    {
+
+                    }
+                    else
+                    {
+                        if (InventoryCopy[m.Name] < m.Amount)
+                        {
+                            remainingMaterials.Add(new Material(m.Name, m.Type, m.Amount - InventoryCopy[m.Name]));
+                            InventoryCopy[m.Name] = 0;
+                        }
+                        else
+                        {
+                            remainingMaterials.Add(new Material(m.Name, m.Type, 0));
+                            InventoryCopy[m.Name] -= m.Amount;
+                        }
+                    }
+                    
                 }
 
-                materialsForCharacters.Add(character, new List<Material>(temp));
-                temp.Clear();
+                materialsForCharacters.Add(character, new List<Material>(remainingMaterials));
+
+                remainingMaterials.Clear();
             }
             return materialsForCharacters;
         }
-        public static void CalcGem(Character c, List<Material> remainingMaterials)
+        public static void CalcGem(Material requiredMaterial, Character c,  List<Material> remainingMaterials)
         {
             
-            var requiredMaterials = TotalCost(c);
-
-
-            foreach (var requiredMaterial in requiredMaterials) {
-
                 string greenMaterial = Gem.GetMaterial(c, "green");
                 string blueMaterial = Gem.GetMaterial(c, "blue");
                 string violetMaterial = Gem.GetMaterial(c, "violet");
@@ -208,83 +217,26 @@ namespace Genshin.src
 
                 //Console.WriteLine($"{c.Name} {requiredMaterial.Name} {requiredMaterial.Type}");
 
-            }
+            
             
         }
-        public static int CalcExp(Character c, List<Material> inventory, int exp)
+        public static int CalcExp(Material requiredMaterial, List<Material> inventory, int exp)
         {
-            var materaials = TotalCost(c);
-
-            foreach (var m in materaials)
-                if (m.Name == "WanderersAdvice" && exp < m.Amount)
-                {
-                    inventory.Add(new Material(m.Name, m.Type, m.Amount - exp));
-                    exp = 0;
-                }
-                else if (m.Name == "WanderersAdvice" && exp >= m.Amount)
-                {
-                    inventory.Add(new Material(m.Name, m.Type, 0));
-                    exp -= m.Amount;
-                }
+            if (requiredMaterial.Name == "WanderersAdvice" && exp < requiredMaterial.Amount)
+            {
+                inventory.Add(new Material(requiredMaterial.Name, requiredMaterial.Type, requiredMaterial.Amount - exp));
+                exp = 0;
+            }
+            else
+            {
+                inventory.Add(new Material(requiredMaterial.Name, requiredMaterial.Type, 0));
+                exp -= requiredMaterial.Amount;
+            }
             return exp;
         }
  
 
-        public static void Export()
-        {
-            var materialsJson = JsonConvert.SerializeObject(MyInventory, Formatting.Indented);
-            var charactersJson = JsonConvert.SerializeObject(Characters, Formatting.Indented);
-
-            var exportJson = new JObject
-            {
-                ["Materials"] = JToken.Parse(materialsJson),
-                ["Characters"] = JToken.Parse(charactersJson)
-            };
-
-            var exportString = exportJson.ToString(Formatting.Indented);
-            File.WriteAllText("Export.json", exportString);
-
-            Console.WriteLine("Export");
-        }
-        public static void Import()
-        {
-            var init_Json = JObject.Parse(File.ReadAllText("Initializations.json"));
-            var update_Json = JObject.Parse(File.ReadAllText("Export.json"));
-
-            MyInventory = DeserializeInventory(init_Json["Materials"].ToString());
-
-            List<Assets> assets = JsonConvert.DeserializeObject<List<Assets>>((init_Json["Characters"].ToString()));
-
-            foreach (var asset in assets)
-            {
-
-                Characters.Add(new Character(asset.Name, asset));
-            }
-
-            if (update_Json["Materials"] != null)
-            {
-                MyInventory = DeserializeInventory(update_Json["Materials"].ToString());
-                var update_characters = DeserializeCharacters(update_Json["Characters"].ToString());
-
-                foreach (var character in Characters)
-                {
-
-                    var updateCharacter = update_characters.FirstOrDefault(c => c.Name == character.Name);
-                    if (updateCharacter == null) continue;
-                    character.Priority = updateCharacter.Priority;
-                    character.CurrentLevel = updateCharacter.CurrentLevel;
-                    character.DesiredLevel = updateCharacter.DesiredLevel;
-                    character.AutoAttack = updateCharacter.AutoAttack;
-                    character.Elemental = updateCharacter.Elemental;
-                    character.Burst = updateCharacter.Burst;
-                    character.Deleted = updateCharacter.Deleted;
-                    character.Activated = updateCharacter.Activated;
-                }
-
-            }
-            InventoryCopy = CopyDictionary(MyInventory);
-            Console.WriteLine("Import");
-        }
+        
 
         public static void AddCharacter(Character character) => character.Deleted = false;
         public static void CharacrerLevelUp(Character character, string to) => character.DesiredLevel = to;
@@ -343,14 +295,7 @@ namespace Genshin.src
             else Console.WriteLine($"{character} Error Upgrade");
         }
 
-        private static Dictionary<string, int> DeserializeInventory(string json)
-        {
-            return JsonConvert.DeserializeObject<Dictionary<string, int>>(json);
-        }
-        private static List<Character> DeserializeCharacters(string json)
-        {
-            return JsonConvert.DeserializeObject<List<Character>>(json);
-        }
+
         public static void ChangePriority(Character c1, Character c2) => (c2.Priority, c1.Priority) = (c1.Priority, c2.Priority);
         public static void AddMaterial(Material material, int amount) => material.Amount += amount;
         public static void SetMaterial(Material material, int amount) => material.Amount = amount;
@@ -361,7 +306,7 @@ namespace Genshin.src
         {
             return materials.All(m => m.Amount == 0);
         }
-        private static Dictionary<string, int> CopyDictionary(Dictionary<string, int> old)
+        public static Dictionary<string, int> CopyDictionary(Dictionary<string, int> old)
         {
             return new Dictionary<string, int>(old);
         }

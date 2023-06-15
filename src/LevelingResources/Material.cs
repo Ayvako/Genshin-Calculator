@@ -1,6 +1,4 @@
-﻿using Newtonsoft.Json;
-
-namespace Genshin.src.LevelingResources
+﻿namespace Genshin.src.LevelingResources
 {
     public class Material
     {
@@ -31,7 +29,7 @@ namespace Genshin.src.LevelingResources
         }
         public override string ToString()
         {
-            return $"Material: {Name,-25} Amount: {Amount}";
+            return $"Material: {Name,-25} Amount: {Amount, -10} Type: {Type}";
         }
 
     }

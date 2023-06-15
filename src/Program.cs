@@ -12,7 +12,7 @@ namespace Genshin.src
 
         private static void Run()
         {
-            Inventory.Import();
+            DataIO.Import();
 
 
             Dictionary<Character, List<Material>> c = Inventory.CalcRequiredMaterials();
@@ -21,7 +21,7 @@ namespace Genshin.src
                 WriteLine(k.Name);
                 Print(c[k]);
             }
-            Inventory.Export();
+            DataIO.Export();
             ReadLine();
         }
         public static void Print<T>(List<T> list)
